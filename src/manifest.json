@@ -1,0 +1,16 @@
+{
+  "name": "toggl-static-display",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "description": "toggl の常時表示",
+  "content_scripts": [{
+	"matches": [ "http://*/*", "https://*/*" ],
+        "js": [ "jquery-3.6.2.min.js", "script.js" ]
+  }],
+  "web_accessible_resources": ["result_data.json"],
+  "permissions": [
+    "https://api.track.toggl.com/api/v8/time_entries/current",
+    "http://*/*",
+    "https://*/*"
+   ]
+}
