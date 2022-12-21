@@ -1,16 +1,19 @@
-$(() => poll());
 var isFirst = true;
 var res_duration = 0;
 var description = ''
 var invisible = false;
+var calendar = ''
 
 const TOP_RIGHT = 0
 const BOTTOM_RIGHT = 1
 const BOTTOM_LEFT = 2
 const TOP_LEFT = 3
 
-var position_index = TOP_RIGHT
+var position_index = BOTTOM_RIGHT
 
+
+init();
+$(() => poll());
 
 // clickされた時の処理
 $(document).on('click', '#mytoggle_timer_n0yrtr_9999', function(){
@@ -27,11 +30,60 @@ $(document).on('click', '#mytoggle_timer_n0yrtr_9999', function(){
             return
         }
         if(position_index === TOP_LEFT) {
-            $("#mytoggle_timer_n0yrtr_9999").remove()
-            invisible = true;
+            movePosition(TOP_RIGHT)
             return
         }
 });
+
+$(document).on('click', '#mytoggle_timer_n0yrtr_9999_close', function(){
+    $("#mytoggle_timer_n0yrtr_9999").remove()
+    invisible = true;
+});
+
+function init() {
+    $('<ul id= "mytoggle_timer_n0yrtr_9999" style="\
+        position: fixed;\
+        right: 0px;\
+        background-color: #00000088;\
+        z-index: 10000000000000000000;\
+        color: #FFF;\
+        max-width: 250px;\
+        white-space: nowrap;\
+        margin: 0px;\
+        padding: 10px;\
+        list-style: none;\
+        text-decoration: none;\
+        line-height: 1; \
+        text-align: left; \
+        font-family: sans-serif;\
+        ">\
+        <li id="mytoggle_timer_n0yrtr_9999_description"\
+            style="\
+                overflow: hidden;\
+                text-overflow: ellipsis;\
+	        font-size: xx-small;"></li>\
+            <li id="mytoggle_timer_n0yrtr_9999_time"></li>\
+            <li id="mytoggle_timer_n0yrtr_9999_calendar"\
+                style="\
+                    overflow: hidden;\
+                    white-space: pre-wrap;\
+                    text-overflow: ellipsis;\
+                    max-height: 100px;\
+		    font-size: xx-small;"\
+            ></li>\
+        <li id="mytoggle_timer_n0yrtr_9999_close"\
+            style="\
+                overflow: hidden;\
+                text-overflow: ellipsis;\
+                font-size: xx-small;\
+                position: absolute;\
+                top: 10px;\
+                right: 10px;">x</li>\
+        </ul>')
+      .appendTo('body');
+
+      movePosition(position_index)
+}
 
 async function poll() {
   if(invisible) {
@@ -44,36 +96,21 @@ async function poll() {
       if((duration % 60 <= 3) || isFirst) {
           isFirst = false;
           const jsonPath = 'result_data.json'
-          const res = JSON.parse(await getJSON(jsonPath))
+          const res = JSON.parse(await getFile(jsonPath))
           description = res.data.description
           res_duration = res.data.duration
           duration = res_duration + now
+
+          const carendarFilePath = 'result_schedule.txt'
+          calendar = await getFile(carendarFilePath)
       }
       sec = duration % 60
       const min =  Math.floor(duration/60);
-
-
-      $("#mytoggle_timer_n0yrtr_9999").remove();
-
-      $('<ul id= "mytoggle_timer_n0yrtr_9999" style="\
-        position: fixed;\
-        right: 0px;\
-        background-color: #00000088;\
-        z-index: 10000000000000000000;\
-        color: #FFF;\
-        max-width: 150px;\
-        white-space: nowrap;\
-        margin: 0px;\
-        padding: 10px;\
-        list-style: none;\
-        text-decoration: none;\
-        ">\
-        <li style="\
-            overflow: hidden;\
-            text-overflow: ellipsis;">' + description + '</li><li>' + min + ':' + sec + '</li></ul>')
-      .appendTo('body');
-
-      movePosition(position_index)
+      const descriptionDom = $('#mytoggle_timer_n0yrtr_9999_description')
+      descriptionDom.text(description)
+      const time = min + ':' + sec;
+      $('#mytoggle_timer_n0yrtr_9999_time').text(time)
+      $('#mytoggle_timer_n0yrtr_9999_calendar').text(calendar)
 
  } catch(e) {
     console.log(e)
@@ -111,7 +148,7 @@ function movePosition(position) {
     position_index = position
 }
 
-function getJSON(filename) {
+function getFile(filename) {
     return new Promise(function(r) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', chrome.extension.getURL(filename), true);
