@@ -1,16 +1,19 @@
 {
   "name": "toggl-static-display",
   "version": "1.0.0",
-  "manifest_version": 2,
+  "manifest_version": 3,
   "description": "toggl の常時表示",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://api.track.toggl.com/api/v8/time_entries/current",
+    "http://*/*",
+    "https://*/*"
+  ],
   "content_scripts": [{
 	"matches": [ "http://*/*", "https://*/*" ],
         "js": [ "jquery-3.6.2.min.js", "script.js" ]
   }],
-  "web_accessible_resources": ["result_data.json", "result_schedule.txt"],
-  "permissions": [
-    "https://api.track.toggl.com/api/v8/time_entries/current",
-    "http://*/*",
-    "https://*/*"
-   ]
+  "web_accessible_resources": [{
+	   "matches": [ "http://*/*", "https://*/*" ],
+ "resources": [ "/result_data.json", "/result_schedule.txt"]}]
 }

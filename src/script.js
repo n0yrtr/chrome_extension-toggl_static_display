@@ -1,7 +1,7 @@
 var isFirst = true;
 var res_duration = 0;
 var description = ''
-var invisible = false;
+
 var calendar = ''
 
 const TOP_RIGHT = 0
@@ -9,11 +9,24 @@ const BOTTOM_RIGHT = 1
 const BOTTOM_LEFT = 2
 const TOP_LEFT = 3
 
-var position_index = BOTTOM_RIGHT
+
+var defaults = {position: BOTTOM_RIGHT, hidden: false};
 
 
-init();
-$(() => poll());
+var position_index = defaults.position
+var invisible = defaults.hidden
+
+chrome.storage.sync.get(
+  defaults,
+  function(storageData) {
+    position_index = storageData.position;
+    invisible = storageData.hidden;
+    init();
+    $(() => poll());
+  }
+);
+
+
 
 // clickされた時の処理
 $(document).on('click', '#mytoggle_timer_n0yrtr_9999', function(){
@@ -36,8 +49,10 @@ $(document).on('click', '#mytoggle_timer_n0yrtr_9999', function(){
 });
 
 $(document).on('click', '#mytoggle_timer_n0yrtr_9999_close', function(){
-    $("#mytoggle_timer_n0yrtr_9999").remove()
-    invisible = true;
+   minimize();
+});
+$(document).on('click', '#mytoggle_timer_n0yrtr_9999_expand', function(){
+    expand();
 });
 
 function init() {
@@ -97,9 +112,12 @@ async function poll() {
           isFirst = false;
           const jsonPath = 'result_data.json'
           const res = JSON.parse(await getFile(jsonPath))
-          description = res.data.description
-          res_duration = res.data.duration
-          duration = res_duration + now
+          if(res.data) {
+            description = res.data.description
+            res_duration = res.data.duration
+            duration = res_duration + now  
+          }
+          
 
           const carendarFilePath = 'result_schedule.txt'
           calendar = await getFile(carendarFilePath)
@@ -146,12 +164,57 @@ function movePosition(position) {
         $("#mytoggle_timer_n0yrtr_9999").css('left','0');
     }
     position_index = position
+    var storageData = {position: position_index, hidden: invisible}
+    chrome.storage.sync.set(storageData, function(){});
+}
+
+function minimize() {
+    $("#mytoggle_timer_n0yrtr_9999_description").css('display','none')
+    $("#mytoggle_timer_n0yrtr_9999_time").css('display','none')
+    $("#mytoggle_timer_n0yrtr_9999_calendar").css('display','none')
+    $("#mytoggle_timer_n0yrtr_9999").css('max-height','20px');
+    $("#mytoggle_timer_n0yrtr_9999").css('max-width','20px');
+    $("#mytoggle_timer_n0yrtr_9999_close").remove()
+    $('<li id="mytoggle_timer_n0yrtr_9999_expand"\
+            style="\
+                overflow: hidden;\
+                text-overflow: ellipsis;\
+                font-size: xx-small;\
+                position: absolute;\
+                top: 10px;\
+                right: 10px;">□</li>').appendTo($("#mytoggle_timer_n0yrtr_9999"))
+    invisible = true;
+
+    var storageData = {position: position_index, hidden: invisible}
+    chrome.storage.sync.set(storageData, function(){});
+}
+
+function expand() {
+    $("#mytoggle_timer_n0yrtr_9999_description").css('display','block')
+    $("#mytoggle_timer_n0yrtr_9999_time").css('display','block')
+    $("#mytoggle_timer_n0yrtr_9999_calendar").css('display','block')
+    $("#mytoggle_timer_n0yrtr_9999").css('max-height','initial');
+    $("#mytoggle_timer_n0yrtr_9999").css('max-width','250px');
+    $("#mytoggle_timer_n0yrtr_9999_expand").remove()
+    $('<li id="mytoggle_timer_n0yrtr_9999_close"\
+            style="\
+                overflow: hidden;\
+                text-overflow: ellipsis;\
+                font-size: xx-small;\
+                position: absolute;\
+                top: 10px;\
+                right: 10px;">x</li>').appendTo($("#mytoggle_timer_n0yrtr_9999"))
+    invisible = false;
+
+    var storageData = {position: position_index, hidden: invisible}
+    chrome.storage.sync.set(storageData, function(){});
+    $(() => poll());
 }
 
 function getFile(filename) {
     return new Promise(function(r) {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', chrome.extension.getURL(filename), true);
+        xhr.open('GET', chrome.runtime.getURL(filename), true);
         xhr.onreadystatechange = function() {
             if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
                 r(xhr.responseText);
